@@ -9,7 +9,7 @@ from sklearn.metrics import ndcg_score
 import yaml
 import numpy as np
 import pandas as pd
-from dataloader import Rating_Dataset, ID_Mapper, Contact_Dataset, collate_fn
+from dataloader import Rating_Dataloader, ID_Mapper, Contact_Dataloader, collate_fn
 from models.MatrixFactor import MatrixFactorization
 from models.graphrec import GraphRec
 

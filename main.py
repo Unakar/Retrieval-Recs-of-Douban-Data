@@ -1,4 +1,4 @@
-from dataloader import Rating_Dataset, ID_Mapper, Contact_Dataset, collate_fn
+from dataloader import Rating_Dataloader, ID_Mapper, Contact_Dataloader, collate_fn
 from models.MatrixFactor import MatrixFactorization
 from models.graphrec import GraphRec
 from train import Basic_Trainer

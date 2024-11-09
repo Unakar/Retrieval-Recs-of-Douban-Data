@@ -25,7 +25,7 @@ class ID_Mapper:
         return self.map_back[idx]
     
 
-class Rating_Dataset(Dataset):
+class Rating_Dataloader(Dataset):
     def __init__(
             self,
             douban_type, # movie or book
@@ -58,7 +58,7 @@ class Rating_Dataset(Dataset):
         return user_index, item_index, rating, text_embed
     
 
-class Contact_Dataset(Dataset):
+class Contact_Dataloader(Dataset):
     def __init__(
             self,
             douban_type, # movie or book
