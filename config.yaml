@@ -1,0 +1,25 @@
+# 数据类型
+douban_type: movie # book
+
+# 数据文件路径
+BOOK_SCORE_PATH: data/stage2/data/book_score.csv
+MOVIE_SCORE_PATH: data/stage2/data/movie_score.csv
+
+BOOK_TAG_PATH: data/stage2/data/selected_book_top_1200_data_tag.csv
+MOVIE_TAG_PATH: data/stage2/data/selected_movie_top_1200_data_tag.csv
+
+# 模型训练保存权重路径
+BOOK_MODEL_PATH: weights/book.pth
+MOVIE_MODEL_PATH: weights/movie.pth
+
+# 结果保持路径
+BOOK_RESULT_PATH: result/book_result.csv
+MOVIE_RESULT_PATH: result/movie_result.csv
+
+# 模型参数定义
+lr: 1e-4
+batch_size: 1024
+epochs: 100
+embedding_dim: 64
+hidden_dim: 128
+num_layers: 2
