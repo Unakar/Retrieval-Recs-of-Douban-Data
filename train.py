@@ -1,10 +1,12 @@
 import torch
+import yaml
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ndcg_score
 import pandas as pd
 import numpy as np
+import pytorch_lightning as pl
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from dataloader import Rating_Dataloader, ID_Mapper, Contact_Dataloader, collate_fn
@@ -41,21 +43,21 @@ class RecommenderDataModule(pl.LightningDataModule):
         # Load data and prepare datasets
         self.tag_embedding_dict = self.tag_embedding.get_embedding(self.type)
         loaded_data = pd.read_csv(self.score_data_path)
-        self.user_idx_converter = IdxConverter(loaded_data["User"].unique())
-        self.item_idx_converter = IdxConverter(loaded_data[self.type_name].unique())
+        self.user_idx = ID_Mapper(loaded_data["User"].unique())
+        self.item_idx = ID_Mapper(loaded_data[self.type_name].unique())
 
         train_data, test_data = train_test_split(
             loaded_data, test_size=0.5, random_state=42
         )
 
-        self.train_dataset = RatingDataset(
+        self.train_dataset = Rating_Dataloader(
             self.type,
             train_data,
             self.user_idx_converter,
             self.item_idx_converter,
             self.tag_embedding_dict,
         )
-        self.test_dataset = RatingDataset(
+        self.test_dataset = Rating_Dataloader(
             self.type,
             test_data,
             self.user_idx_converter,
