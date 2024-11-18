@@ -23,13 +23,13 @@ with open('config.yaml', 'r') as f:
     config = yaml.load(f, Loader = yaml.FullLoader)
 
 class RecommenderDataModule(pl.LightningDataModule):
-    def __init__(self, media_type: MediaType, batch_size: int):
+    def __init__(self, douban_type: DOUBAN_TYPE, batch_size: int):
         super().__init__()
-        self.type = media_type
+        self.type = douban_type
         self.batch_size = batch_size
         self.tag_embedding = TagEmbedding()
 
-        if self.type == MediaType.BOOK:
+        if self.type == DOUBAN_TYPE.BOOK:
             self.score_data_path = Config.BOOK_SCORE_PATH
             self.type_name = "Book"
         else:
@@ -83,12 +83,12 @@ class RecommenderDataModule(pl.LightningDataModule):
 
 
 class RecommenderLightningModule(pl.LightningModule):
-    def __init__(self, media_type: MediaType, num_users: int, num_items: int):
+    def __init__(self, douban_type: DOUBAN_TYPE, num_users: int, num_items: int):
         super().__init__()
-        self.type = media_type
+        self.type = douban_type
         self.model = Model(num_users, num_items)
 
-        if self.type == MediaType.BOOK:
+        if self.type == DOUBAN_TYPE.BOOK:
             self.save_model_path = Config.BOOK_SAVE_MODEL_PATH
             self.save_model_path_final = Config.BOOK_SAVE_MODEL_PATH_FINAL
             self.pretrained_path = Config.BOOK_PRETRAINED_PATH
@@ -192,12 +192,12 @@ class RecommenderLightningModule(pl.LightningModule):
 
 
 def main():
-    # Choose the media type: MediaType.BOOK or MediaType.MOVIE
-    media_type = MediaType.BOOK
+    # Choose the media type: DOUBAN_TYPE.BOOK or DOUBAN_TYPE.MOVIE
+    douban_type = Config.DOUBAN_TYPE
 
     # Initialize the data module
     data_module = RecommenderDataModule(
-        media_type=media_type,
+        douban_type=douban_type,
         batch_size=Config.BATCH_SIZE
     )
     data_module.setup()
@@ -206,7 +206,7 @@ def main():
 
     # Initialize the model module
     model = RecommenderLightningModule(
-        media_type=media_type,
+        douban_type=douban_type,
         num_users=num_users,
         num_items=num_items
     )
@@ -221,7 +221,7 @@ def main():
 
     # Initialize the trainer
     trainer = pl.Trainer(
-        max_epochs=Config.NUM_EPOCHS,
+        max_epochs=Config.EPOCHS,
         callbacks=[checkpoint_callback],
         enable_checkpointing=True,
     )

@@ -5,7 +5,6 @@ llama model with BGE embeddings, designed for personalized recommendation
 import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoTokenizer
-from sentence_transformers import SentenceTransformer
 
 # Ensure transformers package is up to date for compatibility
 bge_model_name = 'BAAI/bge-large-zh'
@@ -165,7 +164,7 @@ class llamaXTModel(nn.Module):
         return rating
 
 
- '''
+'''
  use the following code to test the model
  # Define hyperparameters
 num_users = 10000      # Total number of users

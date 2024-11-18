@@ -1,5 +1,5 @@
 # 数据类型
-douban_type: movie # book
+DOUBAN_TYPE: movie # book
 
 # 数据文件路径
 BOOK_SCORE_PATH: data/stage2/data/book_score.csv
@@ -18,8 +18,8 @@ MOVIE_RESULT_PATH: result/movie_result.csv
 
 # 模型参数定义
 lr: 1e-4
-batch_size: 1024
-epochs: 100
+BATHC_SIZE: 1024
+EPOCH: 100
 embedding_dim: 64
 hidden_dim: 128
 num_layers: 2
