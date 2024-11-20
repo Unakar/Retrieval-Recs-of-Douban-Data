@@ -1,5 +1,8 @@
-# 构建倒排表 并用跳表存储
+# ReadMe: 对于 Book 和 Movie 部分做了所有倒排索引构建的工作
+#         但是后续的布尔查询、前缀编码、按块编码等部分仅用 Book 展示
+#         二者代码完全一致，仅需要修改文件路径即可，故在此不再重复
 import ast
+import time
 import random
 from collections import defaultdict
 from tqdm import tqdm
@@ -126,7 +129,9 @@ def construct_inverted_index_from_frequency(all_tokens_path, file_frequency_path
     inverted_index = build_inverted_index_from_all_tokens(all_tokens_path)
     data = pd.read_csv(file_frequency_path)
     for i in tqdm(range(len(data)), desc='inverted_index_inserting'):
-        book = data['Book'][i]
+        book = data['Book'][i] #Book
+        # movie = data['Movie'][i] #Movie
+        # book = movie #Movie
         tokens_frequency = data['Tokens_Frequency'][i]
         tokens_frequency = ast.literal_eval(tokens_frequency)
         for token, frequency in tokens_frequency.items():
@@ -145,7 +150,7 @@ def construct_inverted_index_from_frequency(all_tokens_path, file_frequency_path
 def convert_inverted_index_to_skip_list(inverted_index):
     inverted_index_skip_list = {}
     for word, index in tqdm(inverted_index.items(), desc='converting_to_skiplist'):
-        # print("word: ", word, "index: ", len(index))
+
         skip_list = SkipList(0)
         for id, frequency in index.items():
             skip_list.insert(id, frequency)
@@ -178,15 +183,20 @@ def query_word(similar_words_mapping, inverted_index_skip_list, word):
         print(f"'{word}' not found")
 
 def pipeline(method):
-    all_tokens_path = 'output/' + method + '_res_sim_words_all.csv'
-    file_frequency_path = 'output/' + method + '_output_frequency_column.csv'
-    inverted_index_skip_list_file_path = 'output/' + method + '_inverted_index_skip_list.pkl'
-    compressed_inverted_index_skip_list_file_path = 'output/' + method + '_compressed_inverted_index_skip_list.pkl'
+    all_tokens_path = 'output/' + method + '_res_sim_words_all.csv' #Book
+    file_frequency_path = 'output/' + method + '_output_frequency_column.csv' #Book
+    inverted_index_skip_list_file_path = 'output/' + method + '_inverted_index_skip_list.pkl' #Book
+    compressed_inverted_index_skip_list_file_path = 'output/' + method + '_compressed_inverted_index_skip_list.pkl' #Book
+    # all_tokens_path = 'output_movie/' + method + '_res_sim_words_all.csv' #Movie
+    # file_frequency_path = 'output_movie/' + method + '_output_frequency_column.csv' #Movie
+    # inverted_index_skip_list_file_path = 'output_movie/' + method + '_inverted_index_skip_list.pkl' #Movie
+    # compressed_inverted_index_skip_list_file_path = 'output_movie/' + method + '_compressed_inverted_index_skip_list.pkl' #Movie
     similar_words_mapping = get_similar_words_mapping(all_tokens_path)
     inverted_index = construct_inverted_index_from_frequency(all_tokens_path, file_frequency_path, similar_words_mapping)
     # save inverted index to file
     inverted_index_df = pd.DataFrame(inverted_index.items(), columns=['word', 'inverted_index'])
-    inverted_index_df.to_csv('output/' + method + '_inverted_index.csv', index=False)
+    inverted_index_df.to_csv('output/' + method + '_inverted_index.csv', index=False) #Book
+    # inverted_index_df.to_csv('output_movie/' + method + '_inverted_index.csv', index=False) #Movie
     inverted_index_skip_list = convert_inverted_index_to_skip_list(inverted_index)
     save_inverted_index_skip_list_to_file(inverted_index_skip_list, inverted_index_skip_list_file_path)
     # query_word(similar_words_mapping, inverted_index_skip_list, '渐兄')
@@ -241,7 +251,7 @@ def parse_query(query, similar_words_mapping, inverted_index_skip_list):
         elif character == ")":
             while operators and operators[-1] != "(":
                 apply_operator()
-            operators.pop()  # 弹出 "("
+            operators.pop()
         elif character in precedence:
             while (operators and operators[-1] != "(" and
                    precedence[operators[-1]] >= precedence[character]):
@@ -444,26 +454,86 @@ if __name__ == '__main__':
     methods = ['jieba']
     for method in methods:
         inverted_index_skip_list = pipeline(method)
+        
+        exit()
         all_tokens_path = 'output/' + method + '_res_sim_words_all.csv'
         file_frequency_path = 'output/' + method + '_output_frequency_column.csv'
         inverted_index_skip_list_file_path = 'output/' + method + '_inverted_index_skip_list.pkl'
         similar_words_mapping = get_similar_words_mapping(all_tokens_path)
         # inverted_index_skip_list = load_inverted_index_skip_list_from_file(inverted_index_skip_list_file_path)
-        query = parse_query("动作and(剧情 or 科幻) and not (恐怖 or开心) and 友情 or (游戏 and not 爱情)",similar_words_mapping,inverted_index_skip_list)
-        result_skiplist = process_query(query, inverted_index_skip_list)
-        print(result_skiplist.get_all_keys())
+        raw_query = "动作and(剧情 or 科幻) and not (恐怖 or开心) and 友情 or (游戏 and not 爱情)"
+        raw_query1 = " 川端康成 and 小说 and 日本"
+        raw_query2 = " 日本 and 小说 and 川端康成"
+        query = parse_query(raw_query,similar_words_mapping,inverted_index_skip_list)
+        print("Optimized Query:", query)
+        print("")
+        print("Comparison")
+        time.sleep(1)
+        start_time1 = time.time()
+        for i in range(100):
+            result_skiplist1 = process_query(raw_query1, inverted_index_skip_list)
+        end_time1 = time.time()
+        print("Optimized_Result:", result_skiplist1.get_all_keys())  
+        time.sleep(1)
+        start_time2 = time.time()
+        for i in range(100):
+            result_skiplist2 = process_query(raw_query2, inverted_index_skip_list)
+        end_time2 = time.time()
+        print("Raw_Result:", result_skiplist2.get_all_keys())
+        print("Optimized_Time:", end_time1 - start_time1)
+        print("Raw_Time:", end_time2 - start_time2)
         
-        # compressed_inverted_index_skip_list = compress_inverted_index_skip_list(method, inverted_index_skip_list)
-        FrontEncodingNodes = front_encoding(inverted_index_skip_list, method)
-        result_skiplist_fe = front_encoding_search(FrontEncodingNodes, '川端康成')
-        print(result_skiplist_fe.get_all_keys())
         
+        
+        # 索引压缩
         print(inverted_index_skip_list['川端康成'].get_all_keys())
+        # compressed_inverted_index_skip_list = compress_inverted_index_skip_list(method, inverted_index_skip_list)
+        
+        
+        
+        print("")
+        print("Compression")
+        
+        print("Front Encoding")
+        FrontEncodingNodes = front_encoding(inverted_index_skip_list, method)
+        time.sleep(1)
+        start_time_fe = time.time()
+        for i in range(10):
+            result_skiplist_fe1 = front_encoding_search(FrontEncodingNodes, '川端康成')
+            result_skiplist_fe2 = front_encoding_search(FrontEncodingNodes, '日本')
+            result_skiplist_fe3 = front_encoding_search(FrontEncodingNodes, '梨花')
+        end_time_fe = time.time()
+        print("川端康成：" + str(result_skiplist_fe1.get_all_keys()))
+        print("日本：" + str(len(result_skiplist_fe2.get_all_keys())))
+        print("梨花：" + str(len(result_skiplist_fe3.get_all_keys())))
         
         print("Block Encoding")
         CompressBlockStorageNode = block_encoding(4, inverted_index_skip_list, method)
-        result_skiplist_be = block_encoding_search(CompressBlockStorageNode, '川端康成')   
-        print(result_skiplist_be.get_all_keys())     
-
+        time.sleep(1)
+        start_time_be = time.time()
+        for i in range(10):
+            result_skiplist_be1 = block_encoding_search(CompressBlockStorageNode, '川端康成')
+            result_skiplist_be2 = block_encoding_search(CompressBlockStorageNode, '日本')
+            result_skiplist_be3 = block_encoding_search(CompressBlockStorageNode, '梨花')
+        end_time_be = time.time()
+        print("川端康成：" + str(result_skiplist_be1.get_all_keys()))
+        print("日本：" + str(len(result_skiplist_be2.get_all_keys())))
+        print("梨花：" + str(len(result_skiplist_be3.get_all_keys())))
+           
+        print("None Encoding")
+        time.sleep(1)
+        start_time_ne = time.time()
+        for i in range(10):
+            result_skiplist_ne1 = inverted_index_skip_list['川端康成']
+            result_skiplist_ne2 = inverted_index_skip_list['日本']
+            result_skiplist_ne3 = inverted_index_skip_list['梨花']
+        end_time_ne = time.time()
+        print("川端康成：" + str(inverted_index_skip_list['川端康成'].get_all_keys()))
+        print("日本：" + str(len(inverted_index_skip_list['日本'].get_all_keys())))
+        print("梨花：" + str(len(inverted_index_skip_list['梨花'].get_all_keys())))
+        
+        print("Front Encoding Time:", end_time_fe - start_time_fe)
+        print("Block Encoding Time:", end_time_be - start_time_be)
+        print("None Encoding Time:", end_time_ne - start_time_ne)
 # 法兰克福 欧美
 # 川端康成 日本 小说

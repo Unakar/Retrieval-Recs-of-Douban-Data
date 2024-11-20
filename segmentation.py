@@ -97,11 +97,14 @@ def pipeline(input, selected_method):
         raise ValueError(f"Unknown method selected: {selected_method}")
 
     output_tokens, output_column = process_func(input_tags)
-    output_file = f'./output/{selected_method}_output_all.csv'
-    column_file = f'./output/{selected_method}_output_frequency_column.csv'
+    output_file = f'./output/{selected_method}_output_all.csv' #Book
+    column_file = f'./output/{selected_method}_output_frequency_column.csv' #Book
+    # output_file = f'./output_movie/{selected_method}_output_all.csv' #Movie
+    # column_file = f'./output_movie/{selected_method}_output_frequency_column.csv' #Movie
     # dataframe_all = pd.DataFrame(list(output_tokens), columns=['token', 'word_class'])
     dataframe_all = pd.DataFrame(list(output_tokens), columns=['token'])
-    dataframe_column = pd.DataFrame(zip(input['Book'], output_column), columns=['Book', 'Tokens_Frequency'])
+    dataframe_column = pd.DataFrame(zip(input['Book'], output_column), columns=['Book', 'Tokens_Frequency']) #Book
+    # dataframe_column = pd.DataFrame(zip(input['Movie'], output_column), columns=['Movie', 'Tokens_Frequency']) #Movie
     dataframe_all.to_csv(output_file, index=False)
     dataframe_column.to_csv(column_file, index=False)
 
@@ -109,7 +112,8 @@ def pipeline(input, selected_method):
      
 
 if __name__ == "__main__":
-    input = pd.read_csv('./data/selected_book_top_1200_data_tag.csv')
+    input = pd.read_csv('./data/selected_book_top_1200_data_tag.csv') #Book
+    # input = pd.read_csv('./data/selected_movie_top_1200_data_tag.csv') #Movie
     # methods = ['pkuseg','ckiptagger','jieba']
     methods = ['jieba']
     for method in methods:

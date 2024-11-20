@@ -55,6 +55,41 @@ def get_similar_words(tokenized_words):
         tokenized_words = tokenized_words[tokenized_words != word_to_delete]
     return similar_words, tokenized_words
 
+def get_similar_words_faster(tokenized_words):
+    similar_words = {}
+    to_delete = set()
+    word_vectors = {}
+
+    for word in tokenized_words:
+        if word is None or (isinstance(word, float) and np.isnan(word)):
+            continue
+        try:
+            word_vectors[word] = ft.get_word_vector(word)
+        except KeyError:
+            pass
+
+    for i, word in enumerate(tqdm(tokenized_words, desc='similar_words_processing')):
+        if word is None or (isinstance(word, float) and np.isnan(word)):
+            continue
+        if word in to_delete or word not in word_vectors:
+            continue
+        
+        vector1 = word_vectors[word]
+        for j in range(i + 1, len(tokenized_words)):
+            sword = tokenized_words[j]
+            if sword is None or (isinstance(sword, float) and np.isnan(sword)) or sword in to_delete or sword not in word_vectors:
+                continue
+            
+            vector2 = word_vectors[sword]
+            similarity = get_vector_similarity(vector1, vector2)
+            if similarity > 0.65:
+                similar_words[word] = similar_words.get(word, []) + [sword]
+                to_delete.add(sword)
+
+    tokenized_words = [word for word in tokenized_words if word not in to_delete]
+    return similar_words, tokenized_words
+
+
 def remove_stop_words(tokenized_words):
     stop_words = []
     with open('./data/stopwords/stop_words.txt', 'r') as f:
@@ -66,22 +101,26 @@ def remove_stop_words(tokenized_words):
 
 def pipeline(method):
     mapping_words = {}
-    input_file_path = './output/' + method + '_output_all.csv'
-    output_file_path = './output/' + method + '_res_sim_words_all.csv'
+    input_file_path = './output/' + method + '_output_all.csv' #Book
+    output_file_path = './output/' + method + '_res_sim_words_all.csv' #Book
+    # input_file_path = './output_movie/' + method + '_output_all.csv' #Movie
+    # output_file_path = './output_movie/' + method + '_res_sim_words_all.csv' #Movie
     tokenized_words = get_tokenized_words(input_file_path)
     print('get_tokenized_words: '+str(len(tokenized_words)))
-    similar_words, tokenized_words = get_similar_words(tokenized_words)
-    print('get_similar_words: '+str(len(tokenized_words)))
+    # similar_words, tokenized_words = get_similar_words_faster(tokenized_words) # Similar words
+    # print('get_similar_words: '+str(len(tokenized_words))) # Similar words
     tokenized_words = remove_stop_words(tokenized_words)
     print('remove_stop_words: '+str(len(tokenized_words)))
-    for word in tokenized_words:
-        maps =  [] if word not in similar_words else similar_words[word]
-        maps.append(word)
-        mapping_words[word] = maps
+    
+    # Similar words
+    # for word in tokenized_words:
+    #     maps =  [] if word not in similar_words else similar_words[word]
+    #     maps.append(word)
+    #     mapping_words[word] = maps
         
-    # save similar_words to file
-    similar_words_df = pandas.DataFrame(mapping_words.items(), columns=['word', 'similar_words'])
-    similar_words_df.to_csv(output_file_path, index=False)
+    # # save similar_words to file
+    # similar_words_df = pandas.DataFrame(mapping_words.items(), columns=['word', 'similar_words'])
+    # similar_words_df.to_csv(output_file_path, index=False)
     return 
 
 if __name__ == '__main__':
