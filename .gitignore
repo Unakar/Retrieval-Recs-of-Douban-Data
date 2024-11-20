@@ -4,3 +4,4 @@ process
 /data/**
 /output/**
 /model/**
+/output_movie/**
