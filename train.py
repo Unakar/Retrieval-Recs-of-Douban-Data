@@ -22,6 +22,9 @@ def compute_ndcg(group):
 with open('config.yaml', 'r') as f:
     config = yaml.load(f, Loader = yaml.FullLoader)
 
+class Config: #由yaml赋予属性值即可，此处隐去服务器实际路径
+    pass
+    
 class RecommenderDataModule(pl.LightningDataModule):
     def __init__(self, douban_type: DOUBAN_TYPE, batch_size: int):
         super().__init__()
@@ -88,24 +91,18 @@ class RecommenderLightningModule(pl.LightningModule):
         self.type = douban_type
         self.model = Model(num_users, num_items)
 
-        if self.type == DOUBAN_TYPE.BOOK:
+        if self.type == "BOOK":
             self.save_model_path = Config.BOOK_SAVE_MODEL_PATH
-            self.save_model_path_final = Config.BOOK_SAVE_MODEL_PATH_FINAL
-            self.pretrained_path = Config.BOOK_PRETRAINED_PATH
             self.result_path = Config.BOOK_RESULT_PATH
         else:
             self.save_model_path = Config.MOVIE_SAVE_MODEL_PATH
-            self.save_model_path_final = Config.MOVIE_SAVE_MODEL_PATH_FINAL
-            self.pretrained_path = Config.MOVIE_PRETRAINED_PATH
             self.result_path = Config.MOVIE_RESULT_PATH
 
-        if Config.PRETRAINED:
-            self.model.load_state_dict(torch.load(self.pretrained_path))
 
         self.loss_fn = nn.MSELoss()
         self.learning_rate = Config.LEARNING_RATE
-        self.step_lr_step_size = Config.STEP_LR_STEP_SIZE
-        self.step_lr_gamma = Config.STEP_LR_GAMMA
+        self.t_max = Config.COSINE_ANNEALING_T_MAX
+        self.self.eta_min = Config.ETA_MIN
 
         self.avg_ndcg = None
 
@@ -171,10 +168,11 @@ class RecommenderLightningModule(pl.LightningModule):
         optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.learning_rate
         )
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer,
-            step_size=self.step_lr_step_size,
-            gamma=self.step_lr_gamma,
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            self.optimizer,
+            T_max=self.t_max,
+            eta_min=self.eta_min,
+            verbose=True,
         )
         return {
             'optimizer': optimizer,
@@ -204,14 +202,12 @@ def main():
     num_users = len(data_module.user_idx_converter)
     num_items = len(data_module.item_idx_converter)
 
-    # Initialize the model module
     model = RecommenderLightningModule(
         douban_type=douban_type,
         num_users=num_users,
         num_items=num_items
     )
 
-    # Set up model checkpointing
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         dirpath='checkpoints/',
         filename='model-{epoch:02d}',
@@ -219,7 +215,6 @@ def main():
         every_n_epochs=5,
     )
 
-    # Initialize the trainer
     trainer = pl.Trainer(
         max_epochs=Config.EPOCHS,
         callbacks=[checkpoint_callback],
@@ -228,7 +223,3 @@ def main():
 
     # Train the model
     trainer.fit(model, datamodule=data_module)
-
-
-if __name__ == "__main__":
-    main()
