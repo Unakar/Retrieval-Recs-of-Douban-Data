@@ -1,3 +1,7 @@
 data
 data/stage2
 process
+/data/**
+/output/**
+/model/**
+/output_movie/**
